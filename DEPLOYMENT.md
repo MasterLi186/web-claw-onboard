@@ -47,7 +47,7 @@ docker run -d \
 
 # 3. 传输源码到容器 (首次部署)
 sshpass -p root scp -o StrictHostKeyChecking=no -P 2222 /tmp/web-claw-onboard.tar.gz root@192.168.110.23:/tmp/
-docker exec openclaw-dev tar -xzf /tmp/web-claw-onboard.tar.gz -C /data/
+docker exec openclaw-dev tar -xzf /tmp/web-claw-onboard.tar.gz -C /opt/web-onboard/
 ```
 
 ---
@@ -105,7 +105,26 @@ docker exec openclaw-dev supervisorctl update
 
 ---
 
-## 开发调试流程
+## 开发调试流程 (推荐 SSH 方式)
+
+```bash
+# 方式1: 直接 SCP 推送 (推荐)
+sshpass -p root scp -o StrictHostKeyChecking=no -P 2222 \
+  /home/lfl/code/web-claw-onboard/server.js \
+  /home/lfl/code/web-claw-onboard/index.html \
+  root@192.168.110.23:/opt/web-onboard/
+
+# 2. 重启 web 服务
+sshpass -p root ssh -o StrictHostKeyChecking=no -p 2222 root@192.168.110.23 \
+  "pkill -9 -f 'node.*server.js' || true; sleep 1; supervisorctl start web-onboard"
+
+# 3. 测试
+curl http://192.168.110.23:18080/
+```
+
+---
+
+## 方式2: ADB + Docker exec
 
 ```bash
 # 1. 本地修改代码后打包
@@ -116,7 +135,7 @@ tar --exclude='.git' -czf /tmp/web-claw-onboard.tar.gz .
 adb push /tmp/web-claw-onboard.tar.gz /tmp/
 
 # 3. 替换容器内源码
-adb shell "docker exec openclaw-dev tar -xzf /tmp/web-claw-onboard.tar.gz -C /data/"
+adb shell "docker exec openclaw-dev tar -xzf /tmp/web-claw-onboard.tar.gz -C /opt/web-onboard/"
 
 # 4. 重启 web 服务
 adb shell "docker exec openclaw-dev supervisorctl restart web-onboard"

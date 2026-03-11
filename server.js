@@ -47,7 +47,98 @@ const PROVIDERS = [
   { value: "venice", label: "Venice AI", hint: "Privacy-focused", apiKeyParam: "--venice-api-key" },
   { value: "litellm", label: "LiteLLM", hint: "Unified LLM gateway", apiKeyParam: "--litellm-api-key" },
   { value: "cloudflare-ai-gateway", label: "Cloudflare AI Gateway", hint: "Account ID + API key", apiKeyParam: "--cloudflare-ai-gateway-api-key" },
+  { value: "siliconflow", label: "硅基流动 (SiliconFlow)", hint: "100+ 模型, Base: https://api.siliconflow.cn/v1", apiKeyParam: "--custom-api-key" },
   { value: "custom", label: "Custom Provider", hint: "OpenAI or Anthropic compatible", apiKeyParam: "--custom-api-key" }
+];
+
+// SiliconFlow 模型列表 (完整)
+const SILICONFLOW_MODELS = [
+  { id: "Qwen/Qwen2.5-7B-Instruct", name: "Qwen2.5-7B-Instruct", ctx: "32K" },
+  { id: "Qwen/Qwen2.5-14B-Instruct", name: "Qwen2.5-14B-Instruct", ctx: "32K" },
+  { id: "Qwen/Qwen2.5-32B-Instruct", name: "Qwen2.5-32B-Instruct", ctx: "32K" },
+  { id: "Qwen/Qwen2.5-Coder-7B-Instruct", name: "Qwen2.5-Coder-7B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2.5-Coder-14B-Instruct", name: "Qwen2.5-Coder-14B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2.5-Coder-32B-Instruct", name: "Qwen2.5-Coder-32B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2.5-VL-7B-Instruct", name: "Qwen2.5-VL-7B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2.5-VL-14B-Instruct", name: "Qwen2.5-VL-14B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2-Math-7B-Instruct", name: "Qwen2-Math-7B-Instruct", ctx: "8K" },
+  { id: "Qwen/Qwen2-Math-72B-Instruct", name: "Qwen2-Math-72B-Instruct", ctx: "32K" },
+  { id: "THUDG/glm-4-9b-chat", name: "GLM-4-9B-Chat", ctx: "128K" },
+  { id: "THUDG/glm-4-9b-chat-1m", name: "GLM-4-9B-Chat-1M", ctx: "1M" },
+  { id: "THUDG/glm-4-32b", name: "GLM-4-32B", ctx: "128K" },
+  { id: "THUDG/glm-4v-9b", name: "GLM-4V-9B", ctx: "8K" },
+  { id: "THUDG/glm-edge-1.5b-chat", name: "GLM-Edge-1.5B-Chat", ctx: "8K" },
+  { id: "THUDG/glm-edge-5b-chat", name: "GLM-Edge-5B-Chat", ctx: "8K" },
+  { id: "deepseek-ai/DeepSeek-Coder-V2", name: "DeepSeek-Coder-V2", ctx: "16K" },
+  { id: "deepseek-ai/DeepSeek-Coder-V2-Lite", name: "DeepSeek-Coder-V2-Lite", ctx: "16K" },
+  { id: "deepseek-ai/DeepSeek-V2", name: "DeepSeek-V2", ctx: "32K" },
+  { id: "deepseek-ai/DeepSeek-V2-Chat", name: "DeepSeek-V2-Chat", ctx: "32K" },
+  { id: "deepseek-ai/DeepSeek-VL2", name: "DeepSeek-VL2", ctx: "4K" },
+  { id: "meta-llama/Meta-Llama-3-8B-Instruct", name: "Llama-3-8B-Instruct", ctx: "8K" },
+  { id: "meta-llama/Meta-Llama-3-70B-Instruct", name: "Llama-3-70B-Instruct", ctx: "8K" },
+  { id: "meta-llama/Meta-Llama-3.1-8B-Instruct", name: "Llama-3.1-8B-Instruct", ctx: "128K" },
+  { id: "meta-llama/Meta-Llama-3.1-70B-Instruct", name: "Llama-3.1-70B-Instruct", ctx: "128K" },
+  { id: "meta-llama/Meta-Llama-3.1-405B-Instruct", name: "Llama-3.1-405B-Instruct", ctx: "128K" },
+  { id: "mistralai/Mistral-7B-Instruct-v0.3", name: "Mistral-7B-Instruct-v0.3", ctx: "32K" },
+  { id: "mistralai/Mixtral-8x7B-Instruct-v0.1", name: "Mixtral-8x7B-Instruct", ctx: "32K" },
+  { id: "mistralai/Mixtral-8x22B-Instruct-v0.1", name: "Mixtral-8x22B-Instruct", ctx: "64K" },
+  { id: "anthropic/claude-3-opus-20240229", name: "Claude-3-Opus", ctx: "200K" },
+  { id: "anthropic/claude-3-sonnet-20240229", name: "Claude-3-Sonnet", ctx: "200K" },
+  { id: "anthropic/claude-3-haiku-20240307", name: "Claude-3-Haiku", ctx: "200K" },
+  { id: "anthropic/claude-3-5-sonnet-20241022", name: "Claude-3.5-Sonnet", ctx: "200K" },
+  { id: "openai/gpt-4o", name: "GPT-4o", ctx: "128K" },
+  { id: "openai/gpt-4o-mini", name: "GPT-4o-mini", ctx: "128K" },
+  { id: "openai/gpt-4-turbo", name: "GPT-4-Turbo", ctx: "128K" },
+  { id: "openai/gpt-3.5-turbo", name: "GPT-3.5-Turbo", ctx: "16K" },
+  { id: "google/gemini-1.5-pro", name: "Gemini-1.5-Pro", ctx: "1M" },
+  { id: "google/gemini-1.5-flash", name: "Gemini-1.5-Flash", ctx: "1M" },
+  { id: "google/gemini-1.5-flash-8b", name: "Gemini-1.5-Flash-8B", ctx: "1M" },
+  { id: "xai/grok-vision-beta", name: "Grok-Vision-Beta", ctx: "8K" },
+  { id: "xai/grok-2", name: "Grok-2", ctx: "131K" },
+  { id: "xai/grok-2-1212", name: "Grok-2-1212", ctx: "131K" },
+  { id: "azure/gpt-4o", name: "Azure GPT-4o", ctx: "128K" },
+  { id: "azure/gpt-4o-mini", name: "Azure GPT-4o-mini", ctx: "128K" },
+  { id: "azure/gpt-4-turbo", name: "Azure GPT-4-Turbo", ctx: "128K" },
+  { id: "moonshotai/moonshot-v1-8k", name: "Moonshot-v1-8K", ctx: "8K" },
+  { id: "moonshotai/moonshot-v1-32k", name: "Moonshot-v1-32K", ctx: "32K" },
+  { id: "moonshotai/moonshot-v1-128k", name: "Moonshot-v1-128K", ctx: "128K" },
+  { id: "stepfun-ai/Step-1V-1.6", name: "Step-1V-1.6", ctx: "8K" },
+  { id: "stepfun-ai/Step-1.5", name: "Step-1.5", ctx: "4K" },
+  { id: "01-ai/yi-1.5-6b", name: "Yi-1.5-6B", ctx: "4K" },
+  { id: "01-ai/yi-1.5-9b", name: "Yi-1.5-9B", ctx: "4K" },
+  { id: "01-ai/yi-1.5-34b", name: "Yi-1.5-34B", ctx: "4K" },
+  { id: "01-ai/yi-vl-plus", name: "Yi-VL-Plus", ctx: "4K" },
+  { id: "baichuan-inc/Baichuan2-Turbo", name: "Baichuan2-Turbo", ctx: "32K" },
+  { id: "baichuan-inc/Baichuan2-53B", name: "Baichuan2-53B", ctx: "32K" },
+  { id: "zhipuai/chatglm3-6b", name: "ChatGLM3-6B", ctx: "8K" },
+  { id: "zhipuai/chatglm4-9b", name: "ChatGLM4-9B", ctx: "128K" },
+  { id: "zhipuai/chatglm4v-6b", name: "ChatGLM4V-6B", ctx: "8K" },
+  { id: "microsoft/Phi-3-mini-4k-instruct", name: "Phi-3-mini-4K", ctx: "4K" },
+  { id: "microsoft/Phi-3-mini-128k-instruct", name: "Phi-3-mini-128K", ctx: "128K" },
+  { id: "microsoft/Phi-3.5-mini-instruct", name: "Phi-3.5-mini", ctx: "4K" },
+  { id: "microsoft/Phi-3.5-vision-instruct", name: "Phi-3.5-Vision", ctx: "4K" },
+  { id: "internlm/internlm2-5-7b", name: "InternLM2.5-7B", ctx: "32K" },
+  { id: "internlm/internlm2-5-20b", name: "InternLM2.5-20B", ctx: "32K" },
+  { id: "internlm/internlm2-chat-7b", name: "InternLM2-Chat-7B", ctx: "32K" },
+  { id: "01-ai/yi-coder-9b", name: "Yi-Coder-9B", ctx: "4K" },
+  { id: "01-ai/yi-coder-34b", name: "Yi-Coder-34B", ctx: "4K" },
+  { id: "Salesforce/codegen-16b", name: "CodeGen-16B", ctx: "4K" },
+  { id: "bigcode/starcoder2-15b", name: "StarCoder2-15B", ctx: "16K" },
+  { id: "codellama/CodeLlama-7b-Instruct", name: "CodeLlama-7B", ctx: "16K" },
+  { id: "codellama/CodeLlama-13b-Instruct", name: "CodeLlama-13B", ctx: "16K" },
+  { id: "codellama/CodeLlama-34b-Instruct", name: "CodeLlama-34B", ctx: "16K" },
+  { id: "WizardLM/WizardCoder-Python-34B", name: "WizardCoder-Python-34B", ctx: "16K" },
+  { id: "large-language-models/PolyCoder-2.7B", name: "PolyCoder-2.7B", ctx: "2K" },
+  { id: "google/falken-12b", name: "Falken-12B", ctx: "8K" },
+  { id: "google/gemma-2-27b-it", name: "Gemma-2-27B-It", ctx: "8K" },
+  { id: "google/gemma-2-9b-it", name: "Gemma-2-9B-It", ctx: "8K" },
+  { id: "BAAI/bge-m3", name: "BGE-M3", ctx: "8K" },
+  { id: "BAAI/bge-large-zh-v1.5", name: "BGE-Large-ZH-v1.5", ctx: "512" },
+  { id: "nvidia/llama-3.1-nemotron-70b-instruct", name: "Nemotron-70B", ctx: "128K" },
+  { id: "AI-ModelScope/flux1-schnell", name: "Flux1-Schnell", ctx: "N/A" },
+  { id: "stabilityai/stable-diffusion-3-medium", name: "SD3-Medium", ctx: "N/A" },
+  { id: "black-forest-labs/FLUX.1-schnell", name: "FLUX.1-schnell", ctx: "N/A" },
+  { id: "bytedance/sdxl-turbo", name: "SDXL-Turbo", ctx: "N/A" },
 ];
 
 function readConfig() {
@@ -63,6 +154,38 @@ function writeConfig(config) {
   const dir = dirname(CONFIG_PATH);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+}
+
+function writeModelsConfig(provider, apiKey, modelId) {
+  const modelsPath = "/root/.openclaw/agents/main/agent/models.json";
+  let modelsData = { providers: {} };
+  
+  try {
+    if (existsSync(modelsPath)) {
+      modelsData = JSON.parse(readFileSync(modelsPath, "utf-8"));
+    }
+  } catch (e) {}
+  
+  if (!modelsData.providers) modelsData.providers = {};
+  
+  modelsData.providers[provider] = {
+    baseUrl: "https://api.siliconflow.cn/v1",
+    api: "openai-completions",
+    apiKey: apiKey,
+    models: [
+      {
+        id: modelId,
+        name: modelId,
+        input: ["text"],
+        contextWindow: 128000,
+        maxTokens: 4096
+      }
+    ]
+  };
+  
+  const dir = dirname(modelsPath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  writeFileSync(modelsPath, JSON.stringify(modelsData, null, 2));
 }
 
 function writeAuthProfile(provider, apiKey) {
@@ -228,7 +351,7 @@ const server = http.createServer((req, res) => {
   }
 
   // 获取模型列表
-  if (pathname.startsWith("/api/models")) {
+  if (pathname === "/api/models") {
     const provider = url.searchParams.get("provider");
     let models = getModels();
     if (provider) {
@@ -245,6 +368,21 @@ const server = http.createServer((req, res) => {
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(models));
+    return;
+  }
+
+  if (pathname === "/api/siliconflow-models") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(SILICONFLOW_MODELS));
+    return;
+  }
+
+  if (pathname === "/api/debug-log") {
+    const msg = url.searchParams.get("msg") || "";
+    const time = new Date().toISOString();
+    appendFileSync("/tmp/web-onboard-debug.log", `[${time}] ${msg}\n`);
+    res.writeHead(200);
+    res.end("ok");
     return;
   }
 
@@ -285,10 +423,15 @@ const server = http.createServer((req, res) => {
           const config = JSON.parse(body);
           log(`ONBOARD CONFIG: ${JSON.stringify(config)}`);
           
+          let modelPrimary = config.model;
+          if (config.provider === 'siliconflow' && config.model) {
+            modelPrimary = 'siliconflow/' + config.model;
+          }
+          
           const fullConfig = {
             agents: {
               defaults: {
-                model: { primary: config.model }
+                model: { primary: modelPrimary }
               }
             },
             gateway: {
@@ -316,6 +459,12 @@ const server = http.createServer((req, res) => {
             log(`WRITING auth profile: provider=${config.provider}, apiKey=${config.apiKey.substring(0, 10)}...`);
             writeAuthProfile(config.provider, config.apiKey);
             log(`WROTE auth profile`);
+          }
+          
+          if (config.provider === 'siliconflow' && config.apiKey && config.model) {
+            log(`WRITING siliconflow models config`);
+            writeModelsConfig('siliconflow', config.apiKey, config.model);
+            log(`WROTE siliconflow models config`);
           }
           
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -375,7 +524,7 @@ const server = http.createServer((req, res) => {
 
   // 静态文件
   let filePath = pathname === "/" ? "/index.html" : pathname;
-  const fullPath = join("/data", filePath);
+  const fullPath = join("/opt/web-onboard", filePath);
 
   if (existsSync(fullPath)) {
     const ext = "." + (filePath.split(".").pop() || "html");

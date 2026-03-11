@@ -375,8 +375,16 @@
       }
     });
 
+    const debugLog = (msg) => {
+      console.log(msg);
+      fetch('/api/debug-log?msg=' + encodeURIComponent(msg)).catch(() => {});
+    };
+
     nextStep1Btn.addEventListener('click', () => {
+      debugLog('[DEBUG] Step1 clicked, provider value: ' + selectedProvider + ' (type: ' + typeof selectedProvider + ')');
+      debugLog('[DEBUG] Calling loadModels...');
       loadModels(selectedProvider);
+      debugLog('[DEBUG] About to showStep(2)');
       showStep(2);
     });
 
@@ -390,14 +398,23 @@
     });
 
     async function loadModels(provider) {
+      debugLog('[DEBUG] loadModels called with provider: ' + provider);
       modelLoading.classList.remove('hidden');
       modelSelect.disabled = true;
       modelSelect.innerHTML = '<option value="">加载中...</option>';
       
       try {
-        const url = '/api/models' + (provider ? '?provider=' + encodeURIComponent(provider) : '');
+        let url;
+        if (provider === 'siliconflow') {
+          url = '/api/siliconflow-models';
+          debugLog('[DEBUG] Using siliconflow-models API');
+        } else {
+          url = '/api/models' + (provider ? '?provider=' + encodeURIComponent(provider) : '');
+          debugLog('[DEBUG] Using standard models API: ' + url);
+        }
         const res = await fetch(url);
         models = await res.json();
+        debugLog('[DEBUG] Loaded models, count: ' + models.length + ', first: ' + JSON.stringify(models[0]));
         
         modelLoading.classList.add('hidden');
         
@@ -405,12 +422,15 @@
           modelSelect.innerHTML = '';
           models.forEach(m => {
             const option = document.createElement('option');
-            option.value = m.key;
-            option.textContent = m.provider + '/' + m.key.split('/').pop() + (m.ctx ? ' (ctx: ' + m.ctx + ')' : '');
+            const modelId = m.id || m.key || m;
+            const modelName = m.name || modelId.split('/').pop();
+            const ctx = m.ctx || '';
+            option.value = modelId;
+            option.textContent = modelId + (ctx ? ' (ctx: ' + ctx + ')' : '');
             modelSelect.appendChild(option);
           });
           modelSelect.disabled = false;
-          selectedModel = models[0].key;
+          selectedModel = models[0].id || models[0].key || models[0];
           modelSelect.value = selectedModel;
           nextStep3Btn.disabled = false;
         } else {
