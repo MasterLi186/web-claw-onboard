@@ -20,7 +20,9 @@ const PROVIDERS = [
   { value: "anthropic", label: "Anthropic", hint: "setup-token + API key", apiKeyParam: "--anthropic-api-key" },
   { value: "chutes", label: "Chutes", hint: "OAuth", apiKeyParam: "--auth-choice chutes" },
   { value: "vllm", label: "vLLM", hint: "Local/self-hosted OpenAI-compatible", apiKeyParam: "--auth-choice vllm" },
-  { value: "minimax", label: "MiniMax", hint: "M2.5 (recommended)", apiKeyParam: "--minimax-api-key" },
+  { value: "minimax-api", label: "MiniMax M2.5", hint: "Global endpoint (api.minimax.io)", apiKeyParam: "--minimax-api-key" },
+  { value: "minimax-api-key-cn", label: "MiniMax M2.5 (CN)", hint: "China endpoint (api.minimaxi.com)", apiKeyParam: "--minimax-api-key" },
+  { value: "minimax-api-lightning", label: "MiniMax M2.5 Highspeed", hint: "Official fast tier", apiKeyParam: "--minimax-api-key" },
   { value: "moonshot", label: "Moonshot AI (Kimi K2.5)", hint: "Kimi K2.5 + Kimi Coding", apiKeyParam: "--moonshot-api-key" },
   { value: "google", label: "Google", hint: "Gemini API key + OAuth", apiKeyParam: "--gemini-api-key" },
   { value: "xai", label: "xAI (Grok)", hint: "API key", apiKeyParam: "--xai-api-key" },
@@ -70,9 +72,14 @@ function writeAuthProfile(provider, apiKey) {
     }
   } catch (e) {}
   
-  authData.profiles[`${provider}:default`] = {
+  let providerKey = provider;
+  if (provider === 'minimax-api') providerKey = 'minimax';
+  if (provider === 'minimax-api-key-cn') providerKey = 'minimax-cn';
+  if (provider === 'minimax-api-lightning') providerKey = 'minimax';
+  
+  authData.profiles[`${providerKey}:default`] = {
     type: "api_key",
-    provider: provider,
+    provider: providerKey,
     key: apiKey
   };
   
@@ -222,8 +229,13 @@ const server = http.createServer((req, res) => {
     const provider = url.searchParams.get("provider");
     let models = getModels();
     if (provider) {
-      models = models.filter(m => m.provider.toLowerCase() === provider.toLowerCase() || 
-                                    m.provider.toLowerCase().startsWith(provider.toLowerCase() + '-'));
+      let modelProvider = provider;
+      if (provider === 'minimax-api') modelProvider = 'minimax';
+      if (provider === 'minimax-api-key-cn') modelProvider = 'minimax-cn';
+      if (provider === 'minimax-api-lightning') modelProvider = 'minimax';
+      
+      models = models.filter(m => m.provider.toLowerCase() === modelProvider.toLowerCase() || 
+                                    m.provider.toLowerCase().startsWith(modelProvider.toLowerCase() + '-'));
     }
     if (models.length === 0) {
       models = getModels();
