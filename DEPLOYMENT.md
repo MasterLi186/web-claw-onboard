@@ -26,6 +26,8 @@
 - 本地: `/home/lfl/code/web-claw-onboard`
 - 容器内: `/opt/web-onboard`
 
+> 注意：`start-openclaw.sh` 属于 OpenClaw 项目本身，不在 Web 工程中。
+
 ---
 
 ## 创建容器方案
