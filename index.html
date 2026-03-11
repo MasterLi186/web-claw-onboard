@@ -68,6 +68,7 @@
       color: white;
     }
     .btn-primary:hover { background: #5568d3; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
     .btn-secondary {
       background: #e0e0e0;
       color: #333;
@@ -111,6 +112,11 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
     #apply-result a {
       color: #667eea;
       text-decoration: none;
@@ -119,20 +125,82 @@
     #apply-result a:hover {
       text-decoration: underline;
     }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s;
+    }
+    .summary-list {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .summary-list div {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .summary-list div:last-child { border-bottom: none; }
+    .summary-label { font-weight: 600; color: #333; }
+    .security-warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 14px;
+      color: #856404;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>OpenClaw Web 配置向导</h1>
-      <p>可视化配置 Gateway</p>
+      <p>完整引导配置 OpenClaw</p>
     </div>
     
     <div class="content">
-      <!-- Step 1: Provider & Model -->
-      <div class="card" id="step1">
-        <h3>Step 1: 选择 AI 服务商和模型</h3>
-        
+      <!-- Step 0: Security Warning -->
+      <div class="card" id="step0">
+        <h3>Step 0: 安全警告</h3>
+        <div class="security-warning">
+          <p><strong>OpenClaw 是一个个人 AI Agent，默认情况下是单用户信任边界。</strong></p>
+          <p>这个 Bot 可以读取文件并在启用工具时执行操作。恶意提示可能诱使其做出不安全的行为。</p>
+          <p>默认情况下，OpenClaw 不是多租户边界。如果多个用户可以向一个启用了工具的 Agent 发送消息，他们共享该委托的工具权限。</p>
+          <p>如果不熟悉安全加固和访问控制，请不要运行 OpenClaw。</p>
+          <p><strong>建议：</strong></p>
+          <ul>
+            <li>使用配对/白名单 + 提及 gating</li>
+            <li>多用户/共享收件箱：分离信任边界</li>
+            <li>沙箱 + 最小权限工具</li>
+            <li>定期运行: openclaw security audit --deep</li>
+          </ul>
+          <p>必须阅读: <a href="https://docs.openclaw.ai/gateway/security" target="_blank">https://docs.openclaw.ai/gateway/security</a></p>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="security-accept"> 我理解这是默认的个人模式，共享/多用户使用需要锁定
+          </label>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="next-step0" disabled>下一步 →</button>
+        </div>
+      </div>
+
+      <!-- Step 1: Provider -->
+      <div class="card hidden" id="step1">
+        <h3>Step 1: 选择 AI 服务商</h3>
         <div class="form-group">
           <label>选择服务商 (Provider)</label>
           <select id="provider-select">
@@ -140,34 +208,48 @@
           </select>
           <div class="hint" id="provider-hint"></div>
         </div>
-        
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-step1">← 上一步</button>
+          <button class="btn btn-primary" id="next-step1" disabled>下一步 →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: API Key -->
+      <div class="card hidden" id="step2">
+        <h3>Step 2: 输入 API Key</h3>
         <div class="form-group">
           <label>API Key</label>
-          <input type="password" id="api-key" placeholder="输入 API Key" disabled>
+          <input type="password" id="api-key" placeholder="输入 API Key">
         </div>
-        
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-step2">← 上一步</button>
+          <button class="btn btn-primary" id="next-step2">下一步 →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Model -->
+      <div class="card hidden" id="step3">
+        <h3>Step 3: 选择模型</h3>
         <div class="form-group">
           <label>选择模型</label>
-          <select id="model-select" disabled>
+          <select id="model-select">
             <option value="">-- 请先选择服务商 --</option>
           </select>
           <div class="hint" id="model-loading" class="hidden">加载中...</div>
         </div>
-        
         <div class="btn-group">
-          <button class="btn btn-primary" id="next-step1" disabled>下一步 →</button>
+          <button class="btn btn-secondary" id="back-step3">← 上一步</button>
+          <button class="btn btn-primary" id="next-step3" disabled>下一步 →</button>
         </div>
       </div>
-      
-      <!-- Step 2: Gateway Config -->
-      <div class="card hidden" id="step2">
-        <h3>Step 2: Gateway 配置</h3>
-        
+
+      <!-- Step 4: Gateway Config -->
+      <div class="card hidden" id="step4">
+        <h3>Step 4: Gateway 配置</h3>
         <div class="form-group">
           <label>端口</label>
           <input type="number" id="gateway-port" value="18789">
         </div>
-        
         <div class="form-group">
           <label>绑定模式</label>
           <select id="gateway-bind">
@@ -175,7 +257,6 @@
             <option value="loopback">Loopback (127.0.0.1) - 仅本地</option>
           </select>
         </div>
-        
         <div class="form-group">
           <label>认证模式</label>
           <select id="gateway-auth">
@@ -183,26 +264,51 @@
             <option value="password">Password</option>
           </select>
         </div>
-        
         <div class="form-group">
           <label>Gateway Token</label>
           <input type="text" id="gateway-token" placeholder="留空自动生成">
         </div>
-        
         <div class="btn-group">
-          <button class="btn btn-secondary" id="back-step2">← 上一步</button>
-          <button class="btn btn-primary" id="apply-config">应用配置</button>
+          <button class="btn btn-secondary" id="back-step4">← 上一步</button>
+          <button class="btn btn-primary" id="next-step4">下一步 →</button>
         </div>
       </div>
-      
-      <!-- Apply Result -->
-      <div id="apply-loading" class="hidden" style="text-align: center; padding: 20px;">
-        <span class="loading"></span> 正在应用配置...
+
+      <!-- Step 5: Confirm -->
+      <div class="card hidden" id="step5">
+        <h3>Step 5: 确认配置</h3>
+        <div class="summary-list">
+          <div><span class="summary-label">服务商:</span> <span id="confirm-provider"></span></div>
+          <div><span class="summary-label">模型:</span> <span id="confirm-model"></span></div>
+          <div><span class="summary-label">端口:</span> <span id="confirm-port"></span></div>
+          <div><span class="summary-label">绑定模式:</span> <span id="confirm-bind"></span></div>
+          <div><span class="summary-label">认证:</span> <span id="confirm-auth"></span></div>
+          <div><span class="summary-label">Token:</span> <span id="confirm-token"></span></div>
+        </div>
+        <div class="alert alert-info">
+          <strong>注意:</strong> 配置将保存到配置文件，并自动重启 OpenClaw 服务。
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-step5">← 上一步</button>
+          <button class="btn btn-primary" id="start-onboard">开始配置 →</button>
+        </div>
       </div>
+
+      <!-- Step 6: Running -->
+      <div class="card hidden" id="step6">
+        <h3>Step 6: 正在配置...</h3>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%"></div></div>
+        <div id="running-status">正在保存配置...</div>
+        <div id="apply-loading" class="hidden" style="text-align: center; padding: 20px;">
+          <span class="loading"></span> 正在配置 OpenClaw...
+        </div>
+      </div>
+
+      <!-- Result -->
       <div id="apply-result"></div>
     </div>
   </div>
-  
+
   <script>
     let providers = [];
     let models = [];
@@ -214,9 +320,32 @@
     const modelSelect = document.getElementById('model-select');
     const modelLoading = document.getElementById('model-loading');
     const providerHint = document.getElementById('provider-hint');
+    const nextStep0Btn = document.getElementById('next-step0');
     const nextStep1Btn = document.getElementById('next-step1');
-    
-    // 加载服务商列表
+    const nextStep2Btn = document.getElementById('next-step2');
+    const nextStep3Btn = document.getElementById('next-step3');
+    const nextStep4Btn = document.getElementById('next-step4');
+    const securityAccept = document.getElementById('security-accept');
+
+    securityAccept.addEventListener('change', () => {
+      nextStep0Btn.disabled = !securityAccept.checked;
+    });
+
+    nextStep0Btn.addEventListener('click', () => showStep(1));
+
+    document.getElementById('back-step1').addEventListener('click', () => showStep(0));
+    document.getElementById('back-step2').addEventListener('click', () => showStep(1));
+    document.getElementById('back-step3').addEventListener('click', () => showStep(2));
+    document.getElementById('back-step4').addEventListener('click', () => showStep(3));
+    document.getElementById('back-step5').addEventListener('click', () => showStep(4));
+
+    function showStep(step) {
+      for (let i = 0; i <= 6; i++) {
+        document.getElementById('step' + i)?.classList.add('hidden');
+      }
+      document.getElementById('step' + step)?.classList.remove('hidden');
+    }
+
     async function loadProviders() {
       try {
         const res = await fetch('/api/providers');
@@ -232,25 +361,7 @@
         console.error('Failed to load providers:', e);
       }
     }
-    
-    // 加载 Token
-    async function loadToken() {
-      try {
-        const res = await fetch('/api/token');
-        const data = await res.json();
-        if (data.token) {
-          document.getElementById('gateway-token').value = data.token;
-        } else {
-          const newRes = await fetch('/api/token', { method: 'POST' });
-          const newData = await newRes.json();
-          document.getElementById('gateway-token').value = newData.token;
-        }
-      } catch (e) {
-        console.error('Failed to load token:', e);
-      }
-    }
-    
-    // 选择服务商
+
     providerSelect.addEventListener('change', async () => {
       selectedProvider = providerSelect.value;
       const provider = providers.find(p => p.value === selectedProvider);
@@ -258,23 +369,26 @@
       providerHint.textContent = provider?.hint || '';
       
       if (selectedProvider) {
-        apiKeyInput.disabled = false;
-        await loadModels(selectedProvider);
+        nextStep1Btn.disabled = false;
       } else {
-        apiKeyInput.disabled = true;
-        modelSelect.innerHTML = '<option value="">-- 请先选择服务商 --</option>';
-        modelSelect.disabled = true;
         nextStep1Btn.disabled = true;
       }
     });
-    
-    // 选择模型
-    modelSelect.addEventListener('change', () => {
-      selectedModel = modelSelect.value;
-      nextStep1Btn.disabled = !selectedModel;
+
+    nextStep1Btn.addEventListener('click', () => {
+      showStep(2);
     });
-    
-    // 加载模型
+
+    nextStep2Btn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        alert('请输入 API Key');
+        return;
+      }
+      showStep(3);
+      await loadModels(selectedProvider);
+    });
+
     async function loadModels(provider) {
       modelLoading.classList.remove('hidden');
       modelSelect.disabled = true;
@@ -292,68 +406,84 @@
           models.forEach(m => {
             const option = document.createElement('option');
             option.value = m.key;
-            option.textContent = m.key + (m.ctx ? ' (ctx: ' + m.ctx + ')' : '');
+            option.textContent = m.provider + '/' + m.key.split('/').pop() + (m.ctx ? ' (ctx: ' + m.ctx + ')' : '');
             modelSelect.appendChild(option);
           });
           modelSelect.disabled = false;
+          selectedModel = models[0].key;
+          modelSelect.value = selectedModel;
+          nextStep3Btn.disabled = false;
         } else {
           modelSelect.innerHTML = '<option value="">未找到模型</option>';
         }
       } catch (e) {
         modelLoading.classList.add('hidden');
-        modelSelect.innerHTML = '<option value="">加载失败</option>';
+        modelSelect.innerHTML = '<option value="">加载失败: ' + e.message + '</option>';
         console.error('Failed to load models:', e);
       }
     }
-    
-    // 下一步
-    nextStep1Btn.addEventListener('click', () => {
-      document.getElementById('step1').classList.add('hidden');
-      document.getElementById('step2').classList.remove('hidden');
+
+    modelSelect.addEventListener('change', () => {
+      selectedModel = modelSelect.value;
+      nextStep3Btn.disabled = !selectedModel;
     });
-    
-    // 上一步
-    document.getElementById('back-step2').addEventListener('click', () => {
-      document.getElementById('step2').classList.add('hidden');
-      document.getElementById('step1').classList.remove('hidden');
+
+    nextStep3Btn.addEventListener('click', () => {
+      showStep(4);
     });
-    
-    // 应用配置
-    document.getElementById('apply-config').addEventListener('click', async () => {
+
+    async function loadToken() {
+      try {
+        const res = await fetch('/api/token');
+        const data = await res.json();
+        if (data.token) {
+          document.getElementById('gateway-token').value = data.token;
+        }
+      } catch (e) {
+        console.error('Failed to load token:', e);
+      }
+    }
+
+    loadToken();
+
+    nextStep4Btn.addEventListener('click', () => {
+      const provider = providers.find(p => p.value === selectedProvider);
+      document.getElementById('confirm-provider').textContent = provider?.label || selectedProvider;
+      document.getElementById('confirm-model').textContent = selectedModel;
+      document.getElementById('confirm-port').textContent = document.getElementById('gateway-port').value;
+      document.getElementById('confirm-bind').textContent = document.getElementById('gateway-bind').value === 'lan' ? 'LAN (0.0.0.0)' : 'Loopback (127.0.0.1)';
+      document.getElementById('confirm-auth').textContent = document.getElementById('gateway-auth').value;
+      document.getElementById('confirm-token').textContent = document.getElementById('gateway-token').value || '(自动生成)';
+      showStep(5);
+    });
+
+    document.getElementById('start-onboard').addEventListener('click', async () => {
+      showStep(6);
       const applyLoading = document.getElementById('apply-loading');
       const applyResult = document.getElementById('apply-result');
       
       applyLoading.classList.remove('hidden');
       applyResult.innerHTML = '';
       
-      const provider = selectedModel.split('/')[0];
+      const gatewayPort = parseInt(document.getElementById('gateway-port').value);
+      const gatewayBind = document.getElementById('gateway-bind').value;
+      const gatewayAuth = document.getElementById('gateway-auth').value;
+      const gatewayToken = document.getElementById('gateway-token').value;
       
       const config = {
-        agents: {
-          defaults: {
-            model: { primary: selectedModel }
-          }
-        },
-        gateway: {
-          mode: 'local',
-          bind: document.getElementById('gateway-bind').value,
-          customBindHost: '0.0.0.0',
-          port: parseInt(document.getElementById('gateway-port').value),
-          controlUi: {
-            enabled: true,
-            allowedOrigins: ['*'],
-            allowInsecureAuth: true,
-            dangerouslyDisableDeviceAuth: true
-          },
-          auth: {
-            mode: document.getElementById('gateway-auth').value,
-            token: document.getElementById('gateway-token').value || undefined
-          }
-        }
+        provider: selectedProvider,
+        apiKey: apiKeyInput.value.trim(),
+        model: selectedModel,
+        gatewayPort: gatewayPort,
+        gatewayBind: gatewayBind,
+        gatewayAuth: gatewayAuth,
+        gatewayToken: gatewayToken || undefined
       };
       
+      console.log('Sending config:', config);
+      
       try {
-        const res = await fetch('/api/config', {
+        const res = await fetch('/api/onboard', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config)
@@ -363,20 +493,23 @@
         applyLoading.classList.add('hidden');
         
         if (result.success) {
-          const port = document.getElementById('gateway-port').value;
-          const token = document.getElementById('gateway-token').value || '自动生成';
-          const tokenUrl = token === '自动生成' ? '' : '#token=' + token;
-          
+          const tokenUrl = gatewayToken ? '#token=' + gatewayToken : '';
           applyResult.innerHTML = '<div class="alert alert-success">' +
-            '<strong>✅ 配置已应用!</strong><br><br>' +
+            '<strong>✅ 配置已保存! 正在重启...</strong><br><br>' +
             '<strong>配置摘要:</strong><br>' +
-            '- 服务商: ' + provider + '<br>' +
+            '- 服务商: ' + selectedProvider + '<br>' +
             '- 模型: ' + selectedModel + '<br>' +
-            '- 端口: ' + port + '<br>' +
-            '- Token: ' + token + '<br><br>' +
+            '- 端口: ' + gatewayPort + '<br>' +
+            '- Token: ' + (gatewayToken || '自动生成') + '<br><br>' +
             '<strong>访问地址:</strong><br>' +
-            '<a href="http://' + window.location.hostname + ':' + port + tokenUrl + '" target="_blank">' +
-            'http://' + window.location.hostname + ':' + port + tokenUrl + '</a></div>';
+            '<a href="http://' + window.location.hostname + ':' + gatewayPort + tokenUrl + '" target="_blank">' +
+            'http://' + window.location.hostname + ':' + gatewayPort + tokenUrl + '</a></div>';
+          
+          setTimeout(async () => {
+            try {
+              await fetch('/api/restart', { method: 'POST' });
+            } catch(e) {}
+          }, 1000);
         } else {
           applyResult.innerHTML = '<div class="alert alert-error">❌ 错误: ' + result.error + '</div>';
         }
@@ -385,10 +518,8 @@
         applyResult.innerHTML = '<div class="alert alert-error">❌ 请求失败: ' + e.message + '</div>';
       }
     });
-    
-    // 初始化
+
     loadProviders();
-    loadToken();
   </script>
 </body>
 </html>
