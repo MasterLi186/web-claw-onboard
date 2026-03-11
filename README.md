@@ -25,3 +25,5 @@ node server.js
 - `POST /api/config` - 设置配置
 - `GET /api/token` - 获取当前 Token
 - `POST /api/token` - 生成新 Token
+- `POST /api/onboard` - 保存配置并写入 auth-profiles.json
+- `POST /api/restart` - 重启 OpenClaw 服务

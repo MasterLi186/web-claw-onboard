@@ -69,6 +69,38 @@ directory=/data
 docker exec openclaw-dev supervisorctl update
 ```
 
+## 启动脚本 (start-openclaw.sh)
+
+Web 向导保存配置后会自动重启 OpenClaw，启动脚本会从配置文件读取参数：
+
+```bash
+# 默认值
+PORT=18789
+BIND="lan"
+TOKEN=""
+
+# 从 JSON 读取
+# gateway.port
+# gateway.bind
+# gateway.auth.token
+```
+
+## OpenClaw Supervisor 配置
+
+```bash
+docker exec openclaw-dev sh -c 'printf "[program:openclaw]
+command=/data/start-openclaw.sh
+autostart=true
+autorestart=true
+user=root
+stdout_logfile=/var/log/openclaw.log
+stderr_logfile=/var/log/openclaw-error.log
+directory=/root
+" > /etc/supervisor/conf.d/openclaw.conf'
+
+docker exec openclaw-dev supervisorctl update
+```
+
 ---
 
 ## 开发调试流程
