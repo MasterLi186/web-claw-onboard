@@ -24,7 +24,7 @@
 
 ## 源码
 - 本地: `/home/lfl/code/web-claw-onboard`
-- 容器内: `/data/`
+- 容器内: `/opt/web-onboard`
 
 ---
 
@@ -56,13 +56,13 @@ docker exec openclaw-dev tar -xzf /tmp/web-claw-onboard.tar.gz -C /data/
 
 ```bash
 docker exec openclaw-dev sh -c 'printf "[program:web-onboard]
-command=sh -c \"cd /data && node server.js\"
+command=sh -c \"cd /opt/web-onboard && node server.js\"
 autostart=true
 autorestart=true
 user=root
 stdout_logfile=/var/log/web-onboard.log
 stderr_logfile=/var/log/web-onboard-error.log
-directory=/data
+directory=/opt/web-onboard
 " > /etc/supervisor/conf.d/web-onboard.conf'
 
 # 重载配置
@@ -89,7 +89,7 @@ TOKEN=""
 
 ```bash
 docker exec openclaw-dev sh -c 'printf "[program:openclaw]
-command=/data/start-openclaw.sh
+command=/opt/web-onboard/start-openclaw.sh
 autostart=true
 autorestart=true
 user=root
