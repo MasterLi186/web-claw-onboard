@@ -376,6 +376,7 @@
     });
 
     nextStep1Btn.addEventListener('click', () => {
+      loadModels(selectedProvider);
       showStep(2);
     });
 
@@ -386,7 +387,6 @@
         return;
       }
       showStep(3);
-      await loadModels(selectedProvider);
     });
 
     async function loadModels(provider) {
@@ -480,7 +480,12 @@
         gatewayToken: gatewayToken || undefined
       };
       
-      console.log('Sending config:', config);
+      const startOnboardBtn = document.getElementById('start-onboard');
+      startOnboardBtn.disabled = true;
+      startOnboardBtn.textContent = '配置中...';
+      
+      applyLoading.classList.remove('hidden');
+      applyResult.innerHTML = '';
       
       try {
         const res = await fetch('/api/onboard', {
@@ -490,31 +495,34 @@
         });
         const result = await res.json();
         
-        applyLoading.classList.add('hidden');
-        
         if (result.success) {
+          await fetch('/api/restart', { method: 'POST' });
+          
+          await new Promise(r => setTimeout(r, 3000));
+          
+          applyLoading.classList.add('hidden');
+          
           const tokenUrl = gatewayToken ? '#token=' + gatewayToken : '';
+          const jumpUrl = 'http://' + window.location.hostname + ':' + gatewayPort + tokenUrl;
           applyResult.innerHTML = '<div class="alert alert-success">' +
-            '<strong>✅ 配置已保存! 正在重启...</strong><br><br>' +
+            '<strong>✅ 配置已保存并重启完成!</strong><br><br>' +
             '<strong>配置摘要:</strong><br>' +
             '- 服务商: ' + selectedProvider + '<br>' +
             '- 模型: ' + selectedModel + '<br>' +
             '- 端口: ' + gatewayPort + '<br>' +
             '- Token: ' + (gatewayToken || '自动生成') + '<br><br>' +
-            '<strong>访问地址:</strong><br>' +
-            '<a href="http://' + window.location.hostname + ':' + gatewayPort + tokenUrl + '" target="_blank">' +
-            'http://' + window.location.hostname + ':' + gatewayPort + tokenUrl + '</a></div>';
-          
-          setTimeout(async () => {
-            try {
-              await fetch('/api/restart', { method: 'POST' });
-            } catch(e) {}
-          }, 1000);
+            '<a href="' + jumpUrl + '" target="_blank" class="btn btn-primary" style="display:inline-block;padding:12px 24px;text-decoration:none;color:white;background:#667eea;border-radius:8px;">跳转访问 →</a><br><br>' +
+            '<small style="color:#666">或访问: ' + jumpUrl + '</small></div>';
         } else {
+          applyLoading.classList.add('hidden');
+          startOnboardBtn.disabled = false;
+          startOnboardBtn.textContent = '开始配置 →';
           applyResult.innerHTML = '<div class="alert alert-error">❌ 错误: ' + result.error + '</div>';
         }
       } catch (e) {
         applyLoading.classList.add('hidden');
+        startOnboardBtn.disabled = false;
+        startOnboardBtn.textContent = '开始配置 →';
         applyResult.innerHTML = '<div class="alert alert-error">❌ 请求失败: ' + e.message + '</div>';
       }
     });
